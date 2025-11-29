@@ -1,10 +1,15 @@
 #test_instructions.py
+import os
+
+from dotenv import load_dotenv
 from fastapi.testclient import TestClient
 from main import app
 import json
 
 client = TestClient(app)
+load_dotenv()
 
+api_key = os.getenv("OPENAI_API_KEY")
 def test_instructions():
     payload = {
         "program_name": "Word",

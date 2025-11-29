@@ -1,0 +1,30 @@
+# Python
+__pycache__/
+*.py[cod]
+*.pyo
+*.pyd
+
+# Virtual env
+.venv/
+venv/
+env/
+
+# Secrets
+.env
+
+# VSCode
+.vscode/
+
+# PyCharm
+.idea/
+
+# OpenAI screenshots
+screenshots/*.png
+
+# OS files
+Thumbs.db
+.DS_Store
+
+# Local data
+*.log
+*.sqlite3
