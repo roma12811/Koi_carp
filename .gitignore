@@ -1,0 +1,33 @@
+cd /mnt/d/Hackaton/Koi_carp
+code .gitignore
+```
+
+Добавь туда:
+```
+# Node (Frontend)
+node_modules/
+npm-debug.log
+yarn-error.log
+
+# Build
+frontend/build/
+frontend/dist/
+
+# Python (Backend)
+backend/__pycache__/
+backend/venv/
+backend/env/
+backend/.env
+*.pyc
+
+# IDE
+.vscode/
+.idea/
+*.swp
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Logs
+*.log
