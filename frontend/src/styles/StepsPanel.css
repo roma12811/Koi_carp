@@ -1,0 +1,97 @@
+/* === Koi Night Theme - Steps Panel === */
+
+.steps-panel {
+  width: 100%;
+}
+
+.back-button {
+  background: var(--surface-light);
+  color: var(--text-main);
+  padding: 8px 16px;
+  border-radius: 8px;
+  border: 1px solid var(--surface-dark);
+  cursor: pointer;
+  font-size: 0.9em;
+  margin-bottom: 12px;
+  transition: all 0.2s;
+}
+
+.back-button:hover {
+  background: var(--accent-orange);
+  color: var(--text-main);
+  border-color: var(--accent-orange-hover);
+}
+
+.steps-title {
+  color: var(--text-main);
+  font-size: 1.1em;
+  font-weight: 600;
+  margin-bottom: 16px;
+  padding-right: 30px;
+}
+
+.steps-list {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.step-item {
+  background: var(--surface-dark);
+  padding: 12px 14px;
+  border-radius: 8px;
+  cursor: pointer;
+  transition: all 0.2s;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  border-left: 3px solid transparent;
+  border: 1px solid var(--surface-light);
+}
+
+.step-item:hover {
+  background: var(--surface-light);
+  border-left-color: var(--accent-orange);
+}
+
+.step-item.active {
+  background: linear-gradient(135deg, var(--accent-orange) 0%, var(--accent-orange-hover) 100%);
+  color: var(--text-main);
+  border-left-color: var(--accent-orange-btn-hover);
+  border-color: rgba(255, 255, 255, 0.1);
+}
+
+.step-number {
+  background: var(--accent-orange);
+  color: var(--bg-primary);
+  width: 28px;
+  height: 28px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 0.9em;
+  font-weight: 700;
+  flex-shrink: 0;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+}
+
+.step-item.active .step-number {
+  background: var(--text-main);
+  color: var(--accent-orange);
+}
+
+.step-text {
+  font-size: 0.95em;
+  font-weight: 500;
+  color: var(--text-secondary);
+}
+
+.step-item:hover .step-text {
+  color: var(--text-main);
+}
+
+.step-item.active .step-text {
+  color: var(--text-main);
+  font-weight: 600;
+}
