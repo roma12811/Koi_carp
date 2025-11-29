@@ -1,3 +1,4 @@
+#program.py
 import tkinter as tk
 from tkinter import scrolledtext, messagebox
 import threading
@@ -6,14 +7,16 @@ from PIL import Image
 import os
 from dotenv import load_dotenv
 from openai import OpenAI
-import base64
-import re
 from datetime import datetime
 
-load_dotenv()
-print("ENV FILE VALUE:", os.getenv("OPENAI_API_KEY"))
-print("SYSTEM VALUE:", os.environ.get("OPENAI_API_KEY"))
+from ai_client import (
+    image_to_base64,
+    parse_program_message,
+    define_program as ai_define_program,
+    generate_instructions as ai_generate_instructions
+)
 
+load_dotenv()
 
 api_key = os.getenv("OPENAI_API_KEY")
 if not api_key:
@@ -175,7 +178,8 @@ class AIAssistantOverlay:
                 self.status_label.config(text="🔄 Analyzing...")
                 self.root.update()
 
-                program_info = self.define_program(filepath)
+                # Using ai_client function
+                program_info = ai_define_program(filepath)
 
                 if program_info:
                     self.current_program = program_info.get("Name", "Unknown")
@@ -195,57 +199,6 @@ class AIAssistantOverlay:
         except Exception as e:
             self.status_label.config(text=f"❌ Error")
             messagebox.showerror("Error", f"Screenshot error: {str(e)}")
-
-    def image_to_base64(self, path):
-        with open(path, "rb") as image_file:
-            return base64.b64encode(image_file.read()).decode("utf-8")
-
-    def parse_program_message(self, message):
-        name_match = re.search(r'Name:\s*"([^"]+)"', message)
-        name = name_match.group(1) if name_match else None
-
-        location_match = re.search(r'Location:\s*"([^"]+)"', message)
-        location = location_match.group(1) if location_match else None
-
-        actions_matches = re.findall(r'Action:\s*"([^"]+)"', message)
-        actions = actions_matches if actions_matches else []
-
-        return {"Name": name, "Location": location, "Actions": actions}
-
-    def define_program(self, screen_url):
-        try:
-            b64_img = self.image_to_base64(screen_url)
-
-            prompt = """You are a UI expert and you are given screenshot of some program in Base64 format. 
-Response in format:
-    Name: "put here name of the program"
-    Location: "put here the current location of program page that is shown on screenshot. For example: home_page -> settings"
-    Action: "first action"
-    Action: "second action"
-    Action: "third action"
-    Action: "fourth action"
-    Action: "fifth action"
-
-Strictly follow brackets in response template.
-No explanations, no extra text."""
-
-            response = client.chat.completions.create(
-                model=MODEL,
-                messages=[{
-                    "role": "user",
-                    "content": [
-                        {"type": "image_url", "image_url": {"url": f"data:image/png;base64,{b64_img}"}},
-                        {"type": "text", "text": prompt}
-                    ]
-                }],
-                max_tokens=MAX_TOKENS
-            )
-
-            return self.parse_program_message(response.choices[0].message.content.strip())
-
-        except Exception as e:
-            print(f"Error: {e}")
-            return None
 
     def on_action_selected(self, event):
         if self.actions_listbox.curselection():
@@ -271,73 +224,13 @@ No explanations, no extra text."""
             self.instructions_text.config(state=tk.DISABLED)
             self.root.update()
 
-            if screenshot_path and os.path.exists(screenshot_path):
-                b64_img = self.image_to_base64(screenshot_path)
-
-                prompt = f"""You are a UI expert analyzing a screenshot of {self.current_program}.
-
-Current location: {self.current_location}
-Required action: {action}
-
-Based on the visible UI elements in the screenshot, provide a step-by-step instruction to complete this action.
-
-IMPORTANT:
-- Return ONLY the exact button/menu/field names as they appear in the UI
-- One action/click per line
-- Be precise and specific - mention exact text on buttons, menu items, or fields
-- Include typing instructions if text input is needed (e.g., "Type: 'filename' in the file name field")
-- Use imperative form (Click, Type, Select, etc.)
-- Do NOT include explanations or numbers
-- Do NOT include step numbers or bullet points
-- Start directly with the first action
-
-Example format:
-Click File menu
-Click Save As
-Type "document_name" in the filename field
-Select PDF format from dropdown
-Click Save button"""
-
-                response = client.chat.completions.create(
-                    model=MODEL,
-                    messages=[{
-                        "role": "user",
-                        "content": [
-                            {"type": "image_url", "image_url": {"url": f"data:image/png;base64,{b64_img}"}},
-                            {"type": "text", "text": prompt}
-                        ]
-                    }],
-                    max_tokens=MAX_TOKENS
-                )
-            else:
-                prompt = f"""You are a UI expert. Generate step-by-step instructions for completing this action.
-
-Program: {self.current_program}
-Current location: {self.current_location}
-Action needed: {action}
-
-Provide clear, precise instructions:
-- Return ONLY the exact button/menu/field names or actions
-- One action per line
-- Use imperative form (Click, Type, Select, etc.)
-- Include specific text if needed (e.g., "Type: 'filename'")
-- Do NOT include explanations, numbers, or step indicators
-- Do NOT include bullet points
-
-Start directly with the first action."""
-
-                response = client.chat.completions.create(
-                    model=MODEL,
-                    messages=[
-                        {"role": "system",
-                         "content": "You are a UI expert. Return ONLY the exact button/element names or menu items to click in order. Be precise - use the exact names as they appear in the UI. No explanations, no extra text."},
-                        {"role": "user", "content": prompt}
-                    ],
-                    max_tokens=MAX_TOKENS
-                )
-
-            text = response.choices[0].message.content.strip()
-            steps = [line.strip("- 0123456789.").strip() for line in text.splitlines() if line.strip()]
+            # Using ai_client function
+            steps = ai_generate_instructions(
+                program_name=self.current_program,
+                current_location=self.current_location,
+                action=action,
+                screenshot_path=screenshot_path
+            )
 
             self.instructions_text.config(state=tk.NORMAL)
             self.instructions_text.delete(1.0, tk.END)
