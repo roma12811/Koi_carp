@@ -1,14 +1,12 @@
 import base64
 import os
 import re
-import json
 from PIL import Image
 import pytesseract
 from dotenv import load_dotenv
 from openai import OpenAI
 
-# Налаштування Tesseract
-pytesseract.pytesseract.tesseract_cmd = r"D:\Dev\Tesseract\tesseract.exe"
+pytesseract.pytesseract.tesseract_cmd = r"Tesseract\tesseract.exe"
 
 load_dotenv()
 
@@ -30,15 +28,12 @@ def image_to_base64(path):
 
 
 def parse_program_message(message: str):
-    # Парсимо Name
     name_match = re.search(r'Name:\s*"([^"]+)"', message)
     name = name_match.group(1) if name_match else None
 
-    # Парсимо Location
     location_match = re.search(r'Location:\s*"([^"]+)"', message)
     location = location_match.group(1) if location_match else None
 
-    # Парсимо Actions
     actions_matches = re.findall(r'Action:\s*"([^"]+)"', message)
     actions = actions_matches if actions_matches else []
 
@@ -109,7 +104,6 @@ def find_text_on_screen(screenshot_path: str, search_text: str) -> dict:
     try:
         img = Image.open(screenshot_path)
 
-        # Розпізнаємо текст з координатами
         data = pytesseract.image_to_data(img, output_type=pytesseract.Output.DICT)
 
         # Шукаємо слово
@@ -214,13 +208,10 @@ Click "Save" button"""
         text = response.choices[0].message.content.strip()
         steps = [line.strip("- 0123456789.").strip() for line in text.splitlines() if line.strip()]
 
-        # Тепер обробляємо кожну інструкцію
         result = []
         for step in steps:
-            # Витягуємо текст в лапках
             quoted_texts = extract_quoted_text(step)
 
-            # Намагаємося знайти координати для першого цитованого тексту
             coordinates = None
             if quoted_texts:
                 coordinates = find_text_on_screen(screenshot_path, quoted_texts[0])
@@ -233,7 +224,6 @@ Click "Save" button"""
 
         return result
     else:
-        # Fallback без скріншоту
         prompt = f"""You are a UI expert. Generate step-by-step instructions for completing this action.
 
 Program: {program_name}
@@ -269,7 +259,6 @@ Start directly with the first action."""
         text = response.choices[0].message.content.strip()
         steps = [line.strip("- 0123456789.").strip() for line in text.splitlines() if line.strip()]
 
-        # Без скріншоту координати невідомі
         result = []
         for step in steps:
             quoted_texts = extract_quoted_text(step)
