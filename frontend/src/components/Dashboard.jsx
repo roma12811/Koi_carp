@@ -19,7 +19,7 @@ function Dashboard() {
     try {
       setIsLoading(true);
 
-      const response = await fetch("http://localhost:8000/actions");
+      const response = await fetch("http://localhost:8000/api/actions");
       if (!response.ok) throw new Error("Ошибка загрузки действий");
 
       const data = await response.json();
@@ -37,7 +37,7 @@ function Dashboard() {
       setIsLoading(true);
       setCurrentAction(action);
 
-      const response = await fetch("http://localhost:8000/get-steps", {
+      const response = await fetch("http://localhost:8000/api/get-steps", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ action_id: action.id })
@@ -105,7 +105,7 @@ function Dashboard() {
         {/* Кнопка AI Helper (можно перетаскивать) */}
         <div className="ai-button draggable" onClick={handleExpand}>
           <img 
-            src={`${process.env.PUBLIC_URL}/koi-icon.png`} 
+            src={`${process.env.PUBLIC_URL}/koi-icon.ico`} 
             alt="Koi" 
             className="ai-icon-img"
             onError={(e) => {

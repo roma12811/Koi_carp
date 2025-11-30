@@ -1,57 +1,44 @@
-const { app, BrowserWindow } = require('electron');
+const { app, BrowserWindow, ipcMain } = require('electron');
 const path = require('path');
-// const isDev = require('electron-is-dev');
 
 const isDev = !app.isPackaged;
 
-let mainWindow;
-
 function createWindow() {
-  // Создать окно приложения
-  mainWindow = new BrowserWindow({
-    width: 400,
-    height: 150,
-    x: undefined,  // Позиция X (можешь изменить)
-    y: undefined,  // Позиция Y
-    frame: false,  // Без рамки Windows
-    transparent: false,
-    alwaysOnTop: true,  // Поверх всех окон
+  const mainWindow = new BrowserWindow({
+    width: 650,
+    height: 590,
+    frame: false,
+    transparent: true,
     resizable: true,
     webPreferences: {
-      nodeIntegration: true,
-      contextIsolation: false,
-    },
+      preload: path.join(__dirname, 'preload.js'),
+      contextIsolation: true,
+      nodeIntegration: false
+    }
   });
 
-  // Загрузить React приложение
-  const startUrl = isDev
-    ? 'http://localhost:3000'  // В режиме разработки
-    : `file://${path.join(__dirname, './index.html')}`; // В продакшене
-
-  mainWindow.loadURL(startUrl);
-
-  // Открыть DevTools (для отладки)
   if (isDev) {
+    // React dev-server
+    mainWindow.loadURL('http://localhost:3000');
     mainWindow.webContents.openDevTools();
+  } else {
+    // Грузим React из app.asar
+    mainWindow.loadFile(path.join(__dirname, 'index.html'));
   }
-
-  mainWindow.on('closed', () => {
-    mainWindow = null;
-  });
 }
 
-// Когда Electron готов
-app.whenReady().then(createWindow);
+app.whenReady().then(() => {
+  createWindow();
 
-// Выход при закрытии всех окон (кроме macOS)
+  app.on('activate', () => {
+    if (BrowserWindow.getAllWindows().length === 0) {
+      createWindow();
+    }
+  });
+});
+
 app.on('window-all-closed', () => {
   if (process.platform !== 'darwin') {
     app.quit();
-  }
-});
-
-app.on('activate', () => {
-  if (BrowserWindow.getAllWindows().length === 0) {
-    createWindow();
   }
 });
