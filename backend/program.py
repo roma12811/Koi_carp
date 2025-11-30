@@ -1,4 +1,3 @@
-#program.py
 import tkinter as tk
 from tkinter import scrolledtext, messagebox
 import threading
@@ -13,7 +12,8 @@ from ai_client import (
     image_to_base64,
     parse_program_message,
     define_program as ai_define_program,
-    generate_instructions as ai_generate_instructions
+    generate_instructions as ai_generate_instructions,
+    find_text_on_screen
 )
 
 load_dotenv()
@@ -33,47 +33,53 @@ class AIAssistantOverlay:
     def __init__(self, root):
         self.root = root
         self.root.title("AI Assistant")
+        img = Image.open("image_koi.png")
+        img.save("image_koi.ico")
+        self.root.iconbitmap("image_koi.ico")
         self.root.geometry("280x80")
         self.root.resizable(False, False)
         self.root.attributes('-topmost', True)
-        self.root.configure(bg="#16213e")
+        self.root.configure(bg="#14171B")
 
         self.current_program = None
         self.current_location = None
         self.available_actions = []
         self.last_screenshot = None
-        self.setup_ui()
+        self.current_instructions = []
+        self.highlight_window = None
         self.expanded = False
 
+        self.main_frame = tk.Frame(self.root, bg="#14171B")
+        self.main_frame.pack(fill=tk.BOTH, expand=True)
+
+        self.setup_ui()
+
     def setup_ui(self):
-        # Compact header
-        header = tk.Frame(self.root, bg="#0f3460")
+        header = tk.Frame(self.main_frame, bg="#1A1D22")
         header.pack(fill=tk.X, padx=5, pady=3)
 
         title = tk.Label(header, text="🤖 AI", font=('Helvetica', 10, 'bold'),
-                         bg="#0f3460", fg="#00d4ff")
+                         bg="#1A1D22", fg="#FF8926")
         title.pack(side=tk.LEFT, padx=5, pady=2)
 
-        btn_frame = tk.Frame(header, bg="#0f3460")
+        btn_frame = tk.Frame(header, bg="#1A1D22")
         btn_frame.pack(side=tk.LEFT, fill=tk.X, expand=True, padx=5)
 
         screenshot_btn = tk.Button(btn_frame, text="📸", command=self.take_screenshot_threaded,
-                                   bg="#00d4ff", fg="#000", font=('Helvetica', 9),
+                                   bg="#FF7E1A", fg="#0F2029", font=('Helvetica', 9),
                                    padx=5, pady=2, relief=tk.FLAT, cursor="hand2", width=3)
         screenshot_btn.pack(side=tk.LEFT, padx=2)
 
         self.expand_btn = tk.Button(btn_frame, text="▼", command=self.toggle_expand,
-                                    bg="#00d4ff", fg="#000", font=('Helvetica', 9),
+                                    bg="#FF7E1A", fg="#0F2029", font=('Helvetica', 9),
                                     padx=5, pady=2, relief=tk.FLAT, cursor="hand2", width=3)
         self.expand_btn.pack(side=tk.LEFT, padx=2)
 
-        # Status
-        self.status_label = tk.Label(self.root, text="Ready",
-                                     bg="#16213e", fg="#00d4ff", font=('Helvetica', 8))
+        self.status_label = tk.Label(self.main_frame, text="Ready",
+                                     bg="#14171B", fg="#F2F5F7", font=('Helvetica', 8))
         self.status_label.pack(pady=2)
 
-        # Expanded content (hidden by default)
-        self.expanded_frame = tk.Frame(self.root, bg="#16213e")
+        self.expanded_frame = tk.Frame(self.main_frame, bg="#1C1F22")
 
     def toggle_expand(self):
         if self.expanded:
@@ -89,70 +95,68 @@ class AIAssistantOverlay:
             self.show_expanded_content()
 
     def show_expanded_content(self):
-        # Clear previous content
         for widget in self.expanded_frame.winfo_children():
             widget.destroy()
 
-        # Program info
         info_frame = tk.LabelFrame(self.expanded_frame, text="Program",
-                                   bg="#0f3460", fg="#00d4ff", font=('Helvetica', 8))
+                                   bg="#1A1D22", fg="#FF8926", font=('Helvetica', 8, 'bold'))
         info_frame.pack(fill=tk.X, pady=5)
 
         self.program_label = tk.Label(info_frame, text=self.current_program or "Not analyzed",
-                                      bg="#0f3460", fg="#eee", font=('Helvetica', 8), wraplength=320, justify=tk.LEFT)
+                                      bg="#1A1D22", fg="#E6EBEE", font=('Helvetica', 8),
+                                      wraplength=320, justify=tk.LEFT)
         self.program_label.pack(anchor=tk.W, padx=5, pady=3)
 
-        # Actions
         actions_frame = tk.LabelFrame(self.expanded_frame, text="Actions",
-                                      bg="#0f3460", fg="#00d4ff", font=('Helvetica', 8))
+                                      bg="#1A1D22", fg="#FF8926", font=('Helvetica', 8, 'bold'))
         actions_frame.pack(fill=tk.BOTH, expand=True, pady=5)
 
         scrollbar = tk.Scrollbar(actions_frame)
         scrollbar.pack(side=tk.RIGHT, fill=tk.Y)
 
-        self.actions_listbox = tk.Listbox(actions_frame, bg="#16213e", fg="#eee",
+        self.actions_listbox = tk.Listbox(actions_frame, bg="#14171B", fg="#F2F5F7",
                                           font=('Helvetica', 8), height=6, width=40,
-                                          yscrollcommand=scrollbar.set, relief=tk.FLAT, bd=0)
+                                          yscrollcommand=scrollbar.set, relief=tk.FLAT, bd=0,
+                                          selectbackground="#2D3338", selectforeground="#FF8926")
         self.actions_listbox.pack(fill=tk.BOTH, expand=True)
         scrollbar.config(command=self.actions_listbox.yview)
         self.actions_listbox.bind('<<ListboxSelect>>', self.on_action_selected)
 
-        # Populate actions
-        self.actions_listbox.delete(0, tk.END)
         for i, action in enumerate(self.available_actions, 1):
             self.actions_listbox.insert(tk.END, f"{i}. {action}")
 
-        # Custom action
-        custom_frame = tk.Frame(self.expanded_frame, bg="#16213e")
+        custom_frame = tk.Frame(self.expanded_frame, bg="#1C1F22")
         custom_frame.pack(fill=tk.X, pady=3)
 
-        self.custom_action_entry = tk.Entry(custom_frame, bg="#0f3460", fg="#eee",
-                                            font=('Helvetica', 8), insertbackground="#00d4ff")
+        self.custom_action_entry = tk.Entry(custom_frame, bg="#1A1D22", fg="#E6EBEE",
+                                            font=('Helvetica', 8), insertbackground="#FF8926")
         self.custom_action_entry.pack(side=tk.LEFT, fill=tk.X, expand=True)
         self.custom_action_entry.bind('<Return>', lambda e: self.on_custom_action())
 
         custom_btn = tk.Button(custom_frame, text="→", command=self.on_custom_action,
-                               bg="#00d4ff", fg="#000", font=('Helvetica', 8),
+                               bg="#FF8926", fg="#0F2029", font=('Helvetica', 8),
                                padx=5, relief=tk.FLAT, cursor="hand2")
         custom_btn.pack(side=tk.LEFT, padx=3)
 
-        # Instructions
         instr_frame = tk.LabelFrame(self.expanded_frame, text="Instructions",
-                                    bg="#0f3460", fg="#00d4ff", font=('Helvetica', 8))
+                                    bg="#1A1D22", fg="#FF8926", font=('Helvetica', 8, 'bold'))
         instr_frame.pack(fill=tk.BOTH, expand=True, pady=5)
 
         self.instructions_text = scrolledtext.ScrolledText(instr_frame,
-                                                           bg="#16213e", fg="#00d4ff",
+                                                           bg="#14171B", fg="#E6EBEE",
                                                            font=('Courier', 8),
                                                            height=8, width=40,
-                                                           wrap=tk.WORD, relief=tk.FLAT, bd=0)
+                                                           wrap=tk.WORD, relief=tk.FLAT, bd=0,
+                                                           insertbackground="#FF8926")
         self.instructions_text.pack(fill=tk.BOTH, expand=True)
         self.instructions_text.config(state=tk.DISABLED)
 
-        # Copy button
+        self.instructions_text.bind("<Motion>", self.on_instruction_hover)
+        self.instructions_text.bind("<Leave>", self.on_instruction_leave)
+
         copy_btn = tk.Button(self.expanded_frame, text="📋 Copy",
                              command=self.copy_instructions,
-                             bg="#00d4ff", fg="#000", font=('Helvetica', 8),
+                             bg="#FF8926", fg="#0F2029", font=('Helvetica', 8),
                              relief=tk.FLAT, cursor="hand2")
         copy_btn.pack(pady=3)
 
@@ -178,7 +182,6 @@ class AIAssistantOverlay:
                 self.status_label.config(text="🔄 Analyzing...")
                 self.root.update()
 
-                # Using ai_client function
                 program_info = ai_define_program(filepath)
 
                 if program_info:
@@ -224,19 +227,20 @@ class AIAssistantOverlay:
             self.instructions_text.config(state=tk.DISABLED)
             self.root.update()
 
-            # Using ai_client function
-            steps = ai_generate_instructions(
+            instructions_with_coords = ai_generate_instructions(
                 program_name=self.current_program,
                 current_location=self.current_location,
                 action=action,
                 screenshot_path=screenshot_path
             )
 
+            self.current_instructions = instructions_with_coords
+
             self.instructions_text.config(state=tk.NORMAL)
             self.instructions_text.delete(1.0, tk.END)
 
-            for step in steps:
-                self.instructions_text.insert(tk.END, f"{step}\n")
+            for step_data in instructions_with_coords:
+                self.instructions_text.insert(tk.END, f"{step_data['action']}\n")
 
             self.instructions_text.config(state=tk.DISABLED)
 
@@ -254,6 +258,106 @@ class AIAssistantOverlay:
             messagebox.showinfo("✅", "Copied!")
         except Exception as e:
             messagebox.showerror("Error", f"Could not copy: {str(e)}")
+
+    def on_instruction_hover(self, event):
+        """Обробляє наведення миші на текст інструкції"""
+        try:
+            index = self.instructions_text.index(f"@{event.x},{event.y}")
+            line_num = int(index.split('.')[0]) - 1
+
+            if line_num < len(self.current_instructions):
+                step_data = self.current_instructions[line_num]
+                coords = step_data.get("coordinates")
+
+                if coords and coords.get("x") is not None and coords.get("y") is not None:
+                    scaled_coords = self.scale_coordinates(coords)
+                    self.show_highlight(scaled_coords)
+                else:
+                    self.hide_highlight()
+            else:
+                self.hide_highlight()
+        except:
+            self.hide_highlight()
+
+    def on_instruction_leave(self, event):
+        """Приховує підсвічування коли курсор покидає текст"""
+        self.hide_highlight()
+
+    def scale_coordinates(self, coords):
+        """Масштабує координати з розміру скріншоту на розміри монітора"""
+        try:
+            if self.last_screenshot and os.path.exists(self.last_screenshot):
+                img = Image.open(self.last_screenshot)
+                screenshot_width, screenshot_height = img.size
+
+                with mss.mss() as sct:
+                    monitor = sct.monitors[1]
+                    monitor_width = monitor['width']
+                    monitor_height = monitor['height']
+
+                scale_x = monitor_width / screenshot_width
+                scale_y = monitor_height / screenshot_height
+
+                scaled = {
+                    "x": int(coords.get("x", 0)),
+                    "y": int(coords.get("y", 0)),
+                    "radius": int(coords.get("radius", 40) * 1.5)
+                }
+
+                print(f"📍 Координати: x={scaled['x']}, y={scaled['y']}, radius={scaled['radius']}")
+
+                return scaled
+
+            return coords
+
+        except Exception as e:
+            print(f"❌ Error scaling coordinates: {e}")
+            return coords
+
+    def show_highlight(self, coords):
+        """Показує круглий оверлей на координатах кнопки"""
+        try:
+            if self.highlight_window:
+                self.highlight_window.destroy()
+
+            x = coords.get("x", 0)
+            y = coords.get("y", 0)
+            radius = coords.get("radius", 40)
+
+            print(f"🎯 Highlight: x={x}, y={y}, radius={radius}")
+
+            highlight = tk.Toplevel(self.root)
+            highlight.attributes('-topmost', True)
+            highlight.attributes('-alpha', 0.6)
+            highlight.overrideredirect(True)
+
+            size = radius * 2 + 20
+            highlight.geometry(f"{int(size)}x{int(size)}+{int(x - radius - 10)}+{int(y - radius - 10)}")
+
+            canvas = tk.Canvas(highlight, bg='#FF8926', highlightthickness=0)
+            canvas.pack(fill=tk.BOTH, expand=True)
+
+            canvas.create_oval(
+                5, 5,
+                size - 5, size - 5,
+                outline='#FF8926',
+                width=4,
+                fill=''
+            )
+
+            self.highlight_window = highlight
+
+        except Exception as e:
+            print(f"Error showing highlight: {e}")
+
+    def hide_highlight(self):
+        """Приховує оверлей підсвічування"""
+        if self.highlight_window:
+            try:
+                self.highlight_window.destroy()
+                self.highlight_window = None
+            except:
+                pass
 
 
 if __name__ == "__main__":
