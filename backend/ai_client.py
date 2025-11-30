@@ -6,7 +6,7 @@ import pytesseract
 from dotenv import load_dotenv
 from openai import OpenAI
 
-pytesseract.pytesseract.tesseract_cmd = r"Tesseract\tesseract.exe"
+pytesseract.pytesseract.tesseract_cmd = r"D:\Dev\Tesseract\tesseract.exe"
 
 load_dotenv()
 
