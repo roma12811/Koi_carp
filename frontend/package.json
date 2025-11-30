@@ -3,7 +3,7 @@
   "version": "0.1.0",
   "description": "AI-powered desktop assistant",
   "author": "Koi Carp Team",
-  "main": "electron.js",
+  "main": "public/electron.js",
   "homepage": "./",
   "private": true,
   "dependencies": {
@@ -28,51 +28,6 @@
     "electron-dev": "concurrently \"npm start\" \"wait-on http://localhost:3000 && electron .\"",
     "electron-pack": "npm run build && electron-builder",
     "dist": "npm run build && electron-builder --win"
-  },
-  "build": {
-    "name": "koi-carp-assistant",
-    "version": "0.1.0",
-    "main": "electron.js",
-    "homepage": "./",
-    "scripts": {
-      "start": "react-scripts start",
-      "build": "react-scripts build",
-      "electron": "electron .",
-      "dev": "concurrently \"npm start\" \"npm run electron\"",
-      "dist": "npm run build && electron-builder"
-    },
-    "build": {
-      "appId": "com.koi.carp.assistant",
-      "productName": "Koi Carp Assistant",
-      "files": [
-        "build/**/*",
-        "electron.js",
-        "preload.js",
-        "public/koi-icon.ico"
-      ],
-      "extraResources": [
-        {
-          "from": "backend",
-          "to": "backend",
-          "filter": [
-            "**/*"
-          ]
-        }
-      ],
-      "win": {
-        "icon": "public/koi-icon.ico",
-        "target": "nsis"
-      },
-      "nsis": {
-        "oneClick": false,
-        "perMachine": false,
-        "installerIcon": "public/koi-icon.ico",
-        "uninstallerIcon": "public/koi-icon.ico",
-        "installerHeaderIcon": "public/koi-icon.ico",
-        "createDesktopShortcut": true,
-        "createStartMenuShortcut": true
-      }
-    }
   },
   "browserslist": {
     "production": [

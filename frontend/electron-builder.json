@@ -1,0 +1,38 @@
+{
+  "appId": "com.koi.carp.assistant",
+  "productName": "Koi Carp Assistant",
+  "files": [
+    "build/**/*",
+    "public/electron.js",
+    "public/preload.js",
+    "public/koi-icon.ico"
+  ],
+  "extraResources": [
+    {
+      "from": "backend",
+      "to": "backend",
+      "filter": ["**/*"]
+    }
+  ],
+  "win": {
+    "icon": "public/koi-icon.ico",
+    "target": "nsis"
+  },
+  "nsis": {
+    "oneClick": false,
+    "perMachine": false,
+    "installerIcon": "public/koi-icon.ico",
+    "uninstallerIcon": "public/koi-icon.ico",
+    "installerHeaderIcon": "public/koi-icon.ico",
+    "createDesktopShortcut": true,
+    "createStartMenuShortcut": true
+  },
+  "mac": {
+    "icon": "public/koi-icon.icns",
+    "target": "dmg"
+  },
+  "linux": {
+    "icon": "public/koi-icon.png",
+    "target": ["AppImage", "deb"]
+  }
+}
