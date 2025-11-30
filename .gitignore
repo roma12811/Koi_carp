@@ -3,28 +3,41 @@ __pycache__/
 *.py[cod]
 *.pyo
 *.pyd
+backend/__pycache__/
+*.pyc
 
-# Virtual env
+# Virtual environments
 .venv/
 venv/
 env/
+backend/venv/
+backend/env/
 
-# Secrets
+# Node.js (Frontend)
+node_modules/
+npm-debug.log
+yarn-error.log
+
+# Build directories
+frontend/build/
+frontend/dist/
+
+# Environment variables
 .env
+backend/.env
 
-# VSCode
+# IDE
 .vscode/
-
-# PyCharm
 .idea/
+*.swp
 
-# OpenAI screenshots
+# Screenshots
 screenshots/*.png
 
 # OS files
-Thumbs.db
 .DS_Store
+Thumbs.db
 
-# Local data
+# Logs and local data
 *.log
 *.sqlite3

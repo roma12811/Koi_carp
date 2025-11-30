@@ -1,0 +1,89 @@
+{
+  "name": "koi-carp-frontend",
+  "version": "0.1.0",
+  "description": "AI-powered desktop assistant",
+  "author": "Koi Carp Team",
+  "main": "electron.js",
+  "homepage": "./",
+  "private": true,
+  "dependencies": {
+    "react": "^18.2.0",
+    "react-dom": "^18.2.0",
+    "react-scripts": "5.0.1",
+    "web-vitals": "^2.1.0"
+  },
+  "devDependencies": {
+    "concurrently": "^9.2.1",
+    "electron": "^27.0.0",
+    "electron-builder": "^24.6.4",
+    "electron-is-dev": "^2.0.0",
+    "wait-on": "^8.0.0"
+  },
+  "scripts": {
+    "start": "react-scripts start",
+    "build": "react-scripts build",
+    "test": "react-scripts test",
+    "eject": "react-scripts eject",
+    "electron": "electron .",
+    "electron-dev": "concurrently \"npm start\" \"wait-on http://localhost:3000 && electron .\"",
+    "electron-pack": "npm run build && electron-builder",
+    "dist": "npm run build && electron-builder --win"
+  },
+  "build": {
+    "name": "koi-carp-assistant",
+    "version": "0.1.0",
+    "main": "electron.js",
+    "homepage": "./",
+    "scripts": {
+      "start": "react-scripts start",
+      "build": "react-scripts build",
+      "electron": "electron .",
+      "dev": "concurrently \"npm start\" \"npm run electron\"",
+      "dist": "npm run build && electron-builder"
+    },
+    "build": {
+      "appId": "com.koi.carp.assistant",
+      "productName": "Koi Carp Assistant",
+      "files": [
+        "build/**/*",
+        "electron.js",
+        "preload.js",
+        "public/koi-icon.ico"
+      ],
+      "extraResources": [
+        {
+          "from": "backend",
+          "to": "backend",
+          "filter": [
+            "**/*"
+          ]
+        }
+      ],
+      "win": {
+        "icon": "public/koi-icon.ico",
+        "target": "nsis"
+      },
+      "nsis": {
+        "oneClick": false,
+        "perMachine": false,
+        "installerIcon": "public/koi-icon.ico",
+        "uninstallerIcon": "public/koi-icon.ico",
+        "installerHeaderIcon": "public/koi-icon.ico",
+        "createDesktopShortcut": true,
+        "createStartMenuShortcut": true
+      }
+    }
+  },
+  "browserslist": {
+    "production": [
+      ">0.2%",
+      "not dead",
+      "not op_mini all"
+    ],
+    "development": [
+      "last 1 chrome version",
+      "last 1 firefox version",
+      "last 1 safari version"
+    ]
+  }
+}
